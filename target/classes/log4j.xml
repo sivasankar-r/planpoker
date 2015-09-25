@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE log4j:configuration SYSTEM "http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/xml/doc-files/log4j.dtd">
+
+<log4j:configuration debug="false">
+
+    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+    	<!-- Dont change value here, change debug level specific to packages(loggers) -->
+        <param name="Threshold" value="DEBUG"/>
+        <param name="Target" value="System.out"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%d{ABSOLUTE} %-5p [%c{1}] %m%n"/>
+        </layout>
+    </appender>
+
+   <!-- Spring -->
+    <logger name="org.springframework" additivity="false">
+        <level value="INFO"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    <logger name="com.boeing.planpoker" additivity="false">
+        <!-- Change the below value to INFO to stop the debug level logging -->
+        <level value="DEBUG"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    <root>
+    	<!-- Dont change value here, change debug level specific to packages(loggers) -->
+        <level value="DEBUG"/>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</log4j:configuration>
