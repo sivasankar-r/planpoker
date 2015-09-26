@@ -32,21 +32,19 @@ public class MainController {
 	
 	@RequestMapping(value = {"/session/", "/session"}, method = RequestMethod.GET)
 	public ModelAndView startSession(@RequestParam Map<String,String> allRequestParams) {
-		System.out.println("Start session is called");
 		ModelAndView model = new ModelAndView();
 		String sessionUrl = allRequestParams.get("sessionUrl");
 		String email = allRequestParams.get("email");
 		
 		
 		if(sessionUrl == null || sessionUrl.trim().isEmpty()) {
-			System.out.println("has no session url");
-			//has no session url
+			log.info("has no session url");
 			model.setViewName("login");
 			return model;
 		} 
 		
 		if(email == null || email.trim().isEmpty()) {
-			//has session url but no email
+			log.info("has session url but no email");
 			model.setViewName("joinSession");
 			model.addObject("sessionUrl", sessionUrl);
 			return model;
@@ -54,7 +52,7 @@ public class MainController {
 		
 		Participant user = getUser(email);
 		if(user.getEmail() == null || user.getEmail().isEmpty()) {
-			//has session url and email, but email is invalid
+			log.info("has session url and email, but email is invalid");
 			model.setViewName("joinSession");
 			model.addObject("sessionUrl", sessionUrl);
 			return model;
@@ -63,14 +61,14 @@ public class MainController {
 		PokerSession pokerSession = planningService.fetchPokerSession(sessionUrl);
 		
 		if(pokerSession == null) {
-			//has session url, but invalid session url
+			log.info("has session url, but invalid session url");
 			model.setViewName("login");
 			return model;
 		}
 		
 		boolean isAuthorized = planningService.isAuthorizedUser(pokerSession.getSessionId(), user.getEmail());
 		if(!isAuthorized) {
-			System.out.println("is authorized user");
+			log.info("User not authorized");
 			model.setViewName("login");
 			return model;
 		}
@@ -79,32 +77,11 @@ public class MainController {
 		List<Story> storiesList = planningService.fetchStories(pokerSession.getSessionId());
 		List<Participant> participantList = planningService.fetchParticipantsJoined(pokerSession.getSessionId());
 		
-		if (participantList.size() > 0) {
-			boolean isParticipantExist = false;
-			for(int i = 0; i < participantList.size(); i++) {
-				if (participantList.get(i).getName().equals(user.getName())) {
-					
-					isParticipantExist = true;
-					break;
-				}
-				
-			}
-			
-			if (!isParticipantExist) {
-                try {	
-				    planningService.updateSessionParticipant(pokerSession.getSessionId(), user.getEmail(), 1);
-				    participantList.add(user);
-			    } catch (Exception ex) {
-				    log.error("Exception while update the participants status");
-				    log.error(ex.getMessage());
-				    ex.printStackTrace();
-        		}
-			}
-		}
+		
 		
 		model.setViewName("pokerSession");
 		model.addObject("stories", storiesList);
-		model.addObject("participants", participantList);
+		model.addObject("participants", null);
 		return model;
 	}
 	
@@ -136,7 +113,19 @@ public class MainController {
 		String writeValueAsString = new ObjectMapper().writeValueAsString(user);
 		return writeValueAsString;
 	}
-
+	
+	@RequestMapping(value = "/getHostEmail", method = RequestMethod.GET)
+	@ResponseBody
+	public String getHostEmail(@RequestParam Map<String,String> allRequestParams) throws Exception {
+		System.out.println("getHost Mail is called");
+		String sessionUrl = allRequestParams.get("sessionUrl");
+		System.out.println("sessionUrl..............." + sessionUrl);
+		PokerSession pokerSession = planningService.fetchPokerSession(sessionUrl);
+		System.out.println("email..." + pokerSession.getHostEmail());
+		return pokerSession.getHostEmail();
+	}
+	
+	
 	private Participant getUser(String email) {
 		Participant user = null;
 		if(email!=null && !email.trim().isEmpty()) {
@@ -184,11 +173,6 @@ public class MainController {
         }
         return value;
     }
-	
-	
-	private void joinSession() {
-		
-	}
 	
 	@RequestMapping(value = { "/pokerSession" })
 	public String navPokerSession() {

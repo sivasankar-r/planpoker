@@ -1,0 +1,5 @@
+.progress {
+	  display: table-row;
+      vertical-align: inherit;
+      background-color : #337ab7
+}

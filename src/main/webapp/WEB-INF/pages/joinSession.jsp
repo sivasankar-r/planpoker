@@ -36,8 +36,20 @@
 					<div class="panel-body">
 						<img id="ninja" alt="" src="${pageContext.request.contextPath}/resources/img/poker_ninja.png" >
 						<br/><br/>
-						<span class="sessionUrl">${sessionUrl}</span>
-						<input type="text" class="form-control" id="loginEmail" placeholder="Enter your email id"/>
+						<form class="form-horizontal" role="form">
+							<div class="form-group">
+								<label for="sessionUrl" class="col-sm-3 control-label"> Session ID </label>
+								<div class="col-sm-9">
+									<input type="text" class="form-control" id="sessionUrl" value="${sessionUrl}" disabled/>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="loginEmail" class="col-sm-3 control-label"> Email ID </label>
+								<div class="col-sm-9">
+									<input type="text" class="form-control" id="loginEmail" placeholder="Enter your email id"/>
+								</div>
+							</div>
+						</form>
 					</div>
 					<div class="panel-footer">
 						<button type="button" class="btn btn-primary" onclick="joinSession();">Enter</button>
@@ -85,7 +97,7 @@
 						$("#ninja").attr("src", "${pageContext.request.contextPath}/resources/img/poker_ninja_blood.png");
 						$("#errorMsgDiv").show();
 					} else {
-						window.location.href = 'http://'+location.host + '/session/?sessionUrl='+${sessionUrl}+'&email='+response.email;
+						location.href = "http://"+location.host + "/planpoker/session/?sessionUrl="+"${sessionUrl}"+"&email="+response.email;
 					}
 				},
 				error : function(jqXHR, status, error) {

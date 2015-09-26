@@ -12,7 +12,7 @@
 <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
 <link href="${pageContext.request.contextPath}/resources/css/login.css" rel="stylesheet">
 <style>
-.errorMsg {
+#errorMsg {
 	font-family: Arial;
 	font-weight: bold;
 	font-size: 12px;

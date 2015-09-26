@@ -15,6 +15,9 @@
 <link
 	href="${pageContext.request.contextPath}/resources/css/pokerroom-style.css"
 	rel="stylesheet">
+<link	
+    href="${pageContext.request.contextPath}/resources/css/style.css"
+	rel="stylesheet">
 <style type="text/css">
 	body {
 			padding-top: 20px;
@@ -53,7 +56,7 @@
 				</div>
 			</div>
 			<div class="col-md-1">
-				<a id="show-results" href="#" role="button" class="btn btn-primary btn-default">Show Results</a>
+				<a id="show-results" href="#" role="button" onClick="showResults()" class="btn btn-primary btn-default">Show Results</a>
 			</div>
 			<div class="col-md-1">
 				<a id="vote-again" href="#" role="button" class="btn btn-primary btn-default">Re-Vote</a>
@@ -101,7 +104,7 @@
 							<tr class="${story.voted == 1 ? 'success' : 'danger'}">
 								<td>${(loop.index)+1}</td>
 								<td>${story.storyTitle}</td>
-								<td>${story.finalPoints}</td>
+								<td>${story.voted == 1 ? story.finalPoints : '-'}</td>
 								<td><a id="broadCast" href="#" title="Broadcast for voting" onclick="broadCastStory(${story.storyId})"><span class="glyphicon glyphicon-bullhorn"></span></a>
 								</td>
 							</tr>
@@ -118,7 +121,7 @@
 			<div class="col-md-6">
 				<div class="panel panel-primary" id="storyPanel">
 					<div class="panel-heading">
-						<h3 class="panel-title"># Story Title</h3>
+						<h3 class="panel-title" id="storyTitleId"># Story Title</h3>
 					</div>
 					<div class="panel-body" id="panel-body">
 						<p id="storyDiv">Here comes the description of the story. Here comes the
@@ -156,7 +159,7 @@
 			</div>
 			
 			<div class="col-md-2" id="participantsDiv">
-				<table class="table table-hover">
+				<table class="table table-hover" id="participantsTbl">
 					<thead>
 						<tr>
 							<th>#</th>
@@ -169,7 +172,7 @@
 							<tr class="${participant.currentStoryVote == -1 ? 'danger' : 'success'}">
 								<td>${(loop.index)+1}</td>
 								<td>${participant.name}</td>
-								<td>${participant.currentStoryVote == -1 ? '-' : 'participant.currentStoryVote'}</td>
+								<td>${participant.currentStoryVote == -1 ? '-' : participant.currentStoryVote}</td>
 								</td>
 							</tr>
 						</c:forEach>
@@ -184,78 +187,140 @@
     <script src="${pageContext.request.contextPath}/resources/js/stomp.js"></script>
     
 	<script type="text/javascript">
-		var stompClient = null;
+		var stompClientForBroadcasting = null;
 		var stompClientForVote = null;
+		var currentVoter = null;
+		var stompClientForResults = null;
+		var stompClientForJoining = null;
 		
 		var currentStroyID = null;
 		$(document).ready(function () {
-  			connectToBroadCast();
+			getHostMail();
+			connectToSessionJoiningWS();
+			connectToBroadCast();
   			connectToVote();
-  			
+			connectToResults();
 		});
 		
-		function connectToBroadCast() {
+		function getHostMail() {
+			var sessionURL = getQueryVariable("sessionUrl");
+			console.log("session url...." + sessionURL);
+			var urlValue = location.protocol + "//" + location.host + "/planpoker/getHostEmail";
+			var hostMail = "";
+		    $.ajax({
+			  url : urlValue,
+			  type: "get", //send it through get method
+			  data : {"sessionUrl" : sessionURL},
+			  async: false,
+			  beforeSend : function(xhr) {
+					xhr.setRequestHeader("Accept", "text/plain");
+					xhr.setRequestHeader("Content-Type", "application/json");
+				},
+			  success: function(response) {
+			    //Do Something
+			    alert("success" + response);
+			    console.log("hostMail. in alert.." + hostMail);
+			    hostMail = response;
+			    
+			  },
+			  error: function(xhr) {
+				  alert("error");
+			    //Do Something to handle error
+			  }
+			});
 		
-		    alert("connect");
+			console.log("hostMail..." + hostMail);
+			
+			// To hide the control if not host
+			if (hostMail != getQueryVariable("email")) {
+				alert("is not host");
+				$( ".col-md-1" ).hide();
+				$( "#modal-invite" ).hide();
+			}
+			
+		}
+		
+		function joinSession() {
+			var participantEmail = getQueryVariable('email');
+			var sessionUrl = getQueryVariable('sessionUrl');
+			stompClientForJoining.send("/app/joinSession", {}, JSON.stringify({ 'email' :  participantEmail, 'sessionUrl' : sessionUrl}));
+		}
+		
+		function connectToSessionJoiningWS() {
+			var currentURL = window.location.protocol + "//" + window.location.host;
+		    var socket = new SockJS(currentURL + '/planpoker/joinSession');
+            stompClientForJoining = Stomp.over(socket);            
+            stompClientForJoining.connect({}, function(frame) {
+                //console.log('Connected to the session joining websocket: ' + frame);
+                console.log('Connected to the session joining websocket: ');
+                stompClientForJoining.subscribe('/pokerSession/sessionJoining', function(participantList) {
+                	console.log("New Participant Joined...")
+                	console.log(participantList.body);
+                    updateParticipants(participantList.body);
+                });
+                joinSession();
+			});
+		}
+		
+		function updateParticipants(participantsJson){
+			console.log("Updating Participants table......")
+			var participantData = JSON.parse(participantsJson)
+			$("#participantsTbl tbody").empty();
+			$.each(participantData, function(idx, participant) {
+				var style = participant.currentStoryVote == -1 ? "danger" : "success";
+				var vote = participant.currentStoryVote == -1 ? "-" : participant.currentStoryVote;
+				$('#participantsTbl > tbody').append('<tr class="'+style+'"><td>'+(idx+1)+'</td><td>'+participant.name+'</td><td>'+vote+'</td></tr>');
+			});
+		}
+		
+		function connectToBroadCast() {
 		    var currentURL = window.location.protocol + "//" + window.location.host;
 		    var socket = new SockJS(currentURL + '/planpoker/broadCast');
-            stompClient = Stomp.over(socket);            
-            stompClient.connect({}, function(frame) {
-                console.log('Connected....: ' + frame);
-                stompClient.subscribe('/pokerSession/broadCastStories', function(story) {
-                    console.log("json value....bilgates" + (JSON.parse(story.body).storyTitle));
-                    
-                    currentStroyID = JSON.parse(story.body).storyId;
-                    console.log("current story id........in connectToBroadCast.." + currentStroyID);
-                    
-                    showGreeting((JSON.parse(story.body).storyTitle));
-                    
-                    
-                   //showGreeting(JSON.parse(testName.body).name);
+            stompClientForBroadcasting = Stomp.over(socket);            
+            stompClientForBroadcasting.connect({}, function(frame) {
+               // console.log('Connected to the story broadcasting websocket: ' + frame);
+               console.log('Connected to the story broadcasting websocket: ');
+                stompClientForBroadcasting.subscribe('/pokerSession/broadCastStories', function(story) {
+			currentStroyID = JSON.parse(story.body).storyId;
+			updateCurrentStory(story);
+			var storyTitleDiv = document.getElementById('storyTitleId');
+	               	   var storyTitle = storyTitleDiv.textContent || storyTitleDiv.innerText;
+                 	
+                 	   upadateStoryStatus(storyTitle);
                 });
-                });
+			});
         }
         
        function connectToVote() {
-		   alert("connect to vote");
 		   var currentURL = window.location.protocol + "//" + window.location.host;
 		    var socket = new SockJS(currentURL + '/planpoker/castVote');
             stompClientForVote = Stomp.over(socket);            
             stompClientForVote.connect({}, function(frame) {
-                console.log('Connected..to vote..: ' + frame);
+                //console.log('Connected to the voting websocket: ' + frame);
+                console.log('Connected to the voting websocket: ');
                 stompClientForVote.subscribe('/pokerSession/vote', function(vote) {
-                  //   console.log("json value....for vote..." + (JSON.parse(vote.body)));
-                    console.log("bilgates....how are you....." + vote.body);
-                    
-                    //showGreeting((JSON.parse(story.bodybilgates).storyTitle));
-                   //showGreeting(JSON.parse(testName.body).name);
+			var currentVoter = vote.body;
+                    //console.log("bilgates....how are you....." + vote.body);
+                     updateVoterStatus(currentVoter);
                 });
-                });
+			});
         }
         
+        function connectToResults() {
+  		 
+		   var currentURL = window.location.protocol + "//" + window.location.host;
+		   var socket = new SockJS(currentURL + '/planpoker/getResults');
+           stompClientForResults = Stomp.over(socket);            
+           stompClientForResults.connect({}, function(frame) {
+        	   stompClientForResults.subscribe('/pokerSession/results', function(results) {
+        		   console.log("json value for the results..." + JSON.parse(results.body).participantList);
+                });
+           });
+        }
     
         function broadCastStory(storyId) {
-           currentStroyID = storyId;
-           //alert(storyContent);
-         /*   console.log(".............." + window.location.protocol + "//" + window.location.host);
-            var newURL = window.location.protocol + "//" + window.location.host;
-            //var socket = new SockJS('/planpoker/broadCast');
-            var socket = new SockJS(newURL + '/planpoker/broadCast');
-            stompClient = Stomp.over(socket);            
-            stompClient.connect({}, function(frame) {
-                console.log('Connected....: ' + frame);
-                stompClient.subscribe('/pokerSession/broadCastStories', function(story) {
-                    console.log("json value....bilgates." + (JSON.parse(story.body).storyTitle));
-                    currentStroyID = JSON.parse(story.body).storyId;
-                    console.log("current story id........in broadcast.." + currentStroyID);
-                    showGreeting((JSON.parse(story.body).storyTitle));
-                   //showGreeting(JSON.parse(testName.body).name);
-                });
-                });*/
-                
-       
-               stompClient.send("/app/broadCast", {}, storyId);
-           
+			currentStroyID = storyId;
+			stompClientForBroadcasting.send("/app/broadCast", {}, storyId);
         }
         
         
@@ -285,42 +350,61 @@
               stompClientForVote.send("/app/castVote", {}, JSON.stringify({ 'storyId' :  currentStroyID, 'participantEmail' : participantEmail, 'points' : points}));
          }
         
-        
-        function sendName() {
-            /* var name = document.getElementById('name').value;
-            stompClient.send("/app/hello", {}, JSON.stringify({ 'name': name })); */
+        function showResults() {
+        	stompClientForResults.send("/app/getResults", {}, currentStroyID);
         }
         
-        function showGreeting(message) {
-           console.log("********************Message" + message);
-           /*  var response = document.getElementById('response');
-            var p = document.createElement('p');
-            p.style.wordWrap = 'break-word';
-            p.appendChild(document.createTextNode(message));
-            response.appendChild(p); */
-            
-            var storyDiv = document.getElementById("storyDiv");
-            
-            var mainDiv = document.getElementById("col-md-6");
-            
-            var mainDivWidth = mainDiv.offsetWidth;
-            
-            console.log("story div width..first" + storyDiv.offsetWidth);
-            
-            storyDiv.innerHTML = message;
-            
-            //mainDiv.setAttribute("style", "width:storyDivWidth);
-           // console.log("maindiv second.." +  mainDiv.offsetWidth);
-           // mainDiv.style.width = mainDivWidth;
-            
-            console.log("maindiv third.." +  mainDiv.offsetWidth);
-           /* var p = document.createElement('p');
-            p.style.wordWrap = 'break-word';
-            p.appendChild(document.createTextNode(message));
-            
-            storyDiv.appendChild(p);*/
+        function updateVoterStatus(voterName) {
+           
+        	var targetRow = $("#participant_table tr td").filter(function() {
+        	    return $(this).text() == voterName;
+        	        
+        	}).parent('tr');
+        	targetRow.removeClass('danger');
+        	targetRow.addClass('success');
+           console.log("named.....");
+           
         }
-        
+        function updateCurrentStory(story) {
+			storyTitle = JSON.parse(story.body).storyTitle;
+			$("#storyTitleId").text(storyTitle);
+        }
+	
+	var progressStory;
+        var previousStory;
+        function upadateStoryStatus(storyTitle) {
+        	
+        	if (progressStory != undefined) {
+        		console.log("inisde first if");
+        		previousStory = progressStory;
+        		progressStory = storyTitle
+        	}
+        	
+        	
+        	var targetStoryRow = $("#storiesList tr td").filter(function() {
+        		console.log("..... inside update story status.........." + storyTitle);
+        	    return $(this).text() == storyTitle;
+        	}).parent('tr');
+        	
+        	
+        	targetStoryRow.removeClass('danger');
+            targetStoryRow.addClass('progress');
+            
+            
+            progressStory = storyTitle;
+            
+            if (previousStory != undefined) {
+            	console.log("inisde ");
+            	var previousStoryRow = $("#storiesList tr td").filter(function() {
+            		console.log("..... inside previous story row");
+            	    return $(this).text() == previousStory;
+            	}).parent('tr');
+            	
+            	previousStoryRow.removeClass('progress');
+            	previousStoryRow.addClass('danger');
+            	
+            }
+        }
 	</script>
 </body>
 </html>

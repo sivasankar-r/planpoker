@@ -31,12 +31,14 @@ public interface IPlanningDao {
 
 	boolean isAuthorizedUser(int sessionId, String email);
 	
-	void updateParticipantsStatus(int sessionId, String email, int status) throws SQLException;
+	boolean updateParticipantsStatus(int sessionId, String email, int status);
 	
 	Story fetchStoryById(int storyId);
 	
 	void updateStoryVote(int storyId, String participant_email, int votePint) throws SQLException;
 	
-	public String getUserNameByEmail(String email);
+	String getUserNameByEmail(String email);
+	
+	int fetchSessionIdByStoryId(int storyId);
 
 }

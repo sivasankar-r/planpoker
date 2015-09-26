@@ -46,17 +46,16 @@ public class PlanningDao implements IPlanningDao {
 	}
 	
 	@Override
-	public void updateParticipantsStatus(int sessionId, String email, int status) throws SQLException {
-		int rowsUpdated = jdbcTemplate.update("update session_participants set joined = ? where session_id = ? and email = ?", 
-				new Object[] { status, sessionId, email });
-		System.out.println("..status email" + status + "'" + sessionId + "  " + email);
-		
+	public boolean updateParticipantsStatus(int sessionId, String email, int status) {
+		boolean flag = false;
+		int rowsUpdated = jdbcTemplate.update("update session_participants set joined = ? where session_id = ? and email = ?", new Object[] { status, sessionId, email });
 		if(rowsUpdated ==1) {
+			flag = true;
 			log.info("Updated participant "+ email + " status to the session id : " +  sessionId);
 		} else {
 			log.error("Failed to update the participant "+ email + " status to the session id : " +  sessionId);
 		}	
-		
+		return flag;
 	 }
 	
 
@@ -176,10 +175,22 @@ public class PlanningDao implements IPlanningDao {
 		List<Participant> participants = null;
 		String query = "SELECT a.email, b.name FROM session_participants a join participant b on a.email = b.email where a.session_id = ? and a.joined = ?";
 		participants = jdbcTemplate.query(query, new Object[]{sessionId, 1}, new BeanPropertyRowMapper<Participant>(Participant.class));
-		for(Participant participant : participants) {
-			participant.setCurrentStoryVote(-1);
+		if(participants!=null){
+			for(Participant participant : participants) {
+				participant.setCurrentStoryVote(-1);
+			}
 		}
 		return participants;
+	}
+	
+		@Override 
+	public int fetchSessionIdByStoryId(int storyId) {
+		String query = "SELECT session_id FROM stories WHERE story_id = ?";
+		 
+		int sessionId = jdbcTemplate.queryForObject(
+				query, Integer.class, storyId);
+		
+		return sessionId;
 	}
 
 	@Override

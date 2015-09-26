@@ -53,17 +53,10 @@ public class PlanningService implements IPlanningService {
 	}
 	
 	@Override
-	public void updateSessionParticipant(int sessionId, String userName, int status) throws Exception {
-		try {
-			planningDao.updateParticipantsStatus(sessionId, userName, status);
-		} catch (SQLException ex) {
-			log.error(ex);
-			throw new Exception(ex);
-			
-		}
-		
+	public boolean updateSessionParticipant(int sessionId, String email, int status) {
+		return planningDao.updateParticipantsStatus(sessionId, email, status);
 	}
-
+	
 	public List<Story> generateStories(String input, int sessionId) {
 		List<String> tempList = AppStringUtils.parseLineDelimitedString(input);
 		List<Story> stories = null;
@@ -107,6 +100,11 @@ public class PlanningService implements IPlanningService {
 	@Override
 	public PokerSession fetchPokerSession(String sessionUrl) {
 		return planningDao.fetchPokerSession(sessionUrl);
+	}
+	
+	@Override
+	public int fetchSessionIdByStoryId(int storyId) {
+		return planningDao.fetchSessionIdByStoryId(storyId);
 	}
 
 	@Override

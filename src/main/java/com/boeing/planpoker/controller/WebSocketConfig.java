@@ -24,6 +24,8 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
 		//registry.addEndpoint("/castVote").withSockJS();
 		registry.addEndpoint("/broadCast").withSockJS();
 		registry.addEndpoint("/castVote").withSockJS();
+		registry.addEndpoint("/joinSession").withSockJS();
+		registry.addEndpoint("/getResults").withSockJS();
 	}
 
 }
