@@ -22,6 +22,7 @@ public class PlanningService implements IPlanningService {
 	
 	@Override
 	public void createPlanSession(PokerSession pokerSession) throws Exception {
+		System.out.println("what is called");
 		pokerSession.setSessionUrl(AppStringUtils.generateRandomString());
 		try{
 			int sessionId = planningDao.createPlanningSession(pokerSession);
@@ -30,13 +31,13 @@ public class PlanningService implements IPlanningService {
 				pokerSession.setSessionId(sessionId);
 				List<Story> stories = generateStories(pokerSession.getStories(), sessionId);
 				List<String> participantList = AppStringUtils.parseLineDelimitedString(pokerSession.getPeopleEmailList());
-				if(stories!=null){
-					for(Story story : stories){
+				if(stories!=null) {
+					for(Story story : stories) {
 						planningDao.addStory(story);
 					}
 				}
 
-				if(participantList!=null){
+				if(participantList!=null) {
 					for(String participant : participantList) {
 						planningDao.addParticipant(participant, sessionId);
 					}
@@ -49,6 +50,18 @@ public class PlanningService implements IPlanningService {
 			log.error(ex);
 			throw new Exception(ex);
 		}
+	}
+	
+	@Override
+	public void updateSessionParticipant(int sessionId, String userName, int status) throws Exception {
+		try {
+			planningDao.updateParticipantsStatus(sessionId, userName, status);
+		} catch (SQLException ex) {
+			log.error(ex);
+			throw new Exception(ex);
+			
+		}
+		
 	}
 
 	public List<Story> generateStories(String input, int sessionId) {
@@ -114,5 +127,27 @@ public class PlanningService implements IPlanningService {
 	@Override
 	public boolean isAuthorizedUser(int sessionId, String email) {
 		return planningDao.isAuthorizedUser(sessionId, email);
+	}
+	
+	@Override
+	public Story fetchStoryById(int storyId) {
+		return planningDao.fetchStoryById(storyId);
+	}
+	
+	@Override
+	public void updateStoryVote(int storyId, String participant_email, int votePint) throws Exception {
+		try {
+			planningDao.updateStoryVote(storyId, participant_email, votePint);
+		} catch (SQLException ex) {
+			//ex.printStackTrace();
+			log.error(ex);
+			throw new Exception(ex);
+		}
+	}
+	
+	@Override
+	public String getUserNameByEmail(String email) {
+		return planningDao.getUserNameByEmail(email);
+		
 	}
 }

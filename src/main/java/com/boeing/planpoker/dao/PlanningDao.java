@@ -44,6 +44,21 @@ public class PlanningDao implements IPlanningDao {
 		}
 		return id;
 	}
+	
+	@Override
+	public void updateParticipantsStatus(int sessionId, String email, int status) throws SQLException {
+		int rowsUpdated = jdbcTemplate.update("update session_participants set joined = ? where session_id = ? and email = ?", 
+				new Object[] { status, sessionId, email });
+		System.out.println("..status email" + status + "'" + sessionId + "  " + email);
+		
+		if(rowsUpdated ==1) {
+			log.info("Updated participant "+ email + " status to the session id : " +  sessionId);
+		} else {
+			log.error("Failed to update the participant "+ email + " status to the session id : " +  sessionId);
+		}	
+		
+	 }
+	
 
 	@Override
 	public List<PokerSession> getAllPlanSessions(String hostEmail) throws SQLException {
@@ -112,6 +127,41 @@ public class PlanningDao implements IPlanningDao {
 		}
 		return session;
 	}
+	
+	@Override
+	public String getUserNameByEmail(String email) {
+		String query = "SELECT name FROM participant WHERE email = ?";
+		 
+		String name = jdbcTemplate.queryForObject(
+				query, String.class, email);
+		
+		return name;
+		
+	}
+	
+	@Override
+	public Story fetchStoryById(int storyId) {
+		Story story = null;
+		String query = "SELECT story_id, story_external_id, story_title, story_description, session_id, final_points, voted FROM stories WHERE story_id = ?";
+		
+		List<Story> list = jdbcTemplate.query(query, new Object[]{storyId}, new BeanPropertyRowMapper<Story>(Story.class));
+		if(list != null && !list.isEmpty()) {
+			story = list.get(0);
+		}
+		return story;
+	}
+	
+	@Override
+	public void updateStoryVote(int storyId, String participant_email, int votePint) throws SQLException {
+		int rowsUpdated = jdbcTemplate.update("INSERT INTO story_votes (story_id, participant_email, vote_points) VALUES(?,?,?)", 
+				new Object[] { storyId, participant_email, votePint });
+		
+		if(rowsUpdated ==1) {
+			log.info("Updated StoryVotes by "+ participant_email + "to the Story : " + storyId);
+		} else {
+			log.info("Failed to update StoryVotes by "+ participant_email + "to the Story : " + storyId);
+		}
+	 }
 
 	@Override
 	public List<Story> fetchStories(int sessionId) {
@@ -133,9 +183,9 @@ public class PlanningDao implements IPlanningDao {
 	}
 
 	@Override
-	public List<Participant> fetchStoryVotes(int sessionId, int storyId){
+	public List<Participant> fetchStoryVotes(int sessionId, int storyId) {
 		List<Participant> participants = fetchParticipantsJoined(sessionId);
-			if(participants!=null){
+			if(participants!=null) {
 			for(Participant participant : participants) {
 				String voteQuery = "SELECT vote_points FROM story_votes WHERE participant_email = ? AND story_id = ?";
 				List<Integer> list = jdbcTemplate.query(voteQuery, new Object[]{sessionId, 1}, new BeanPropertyRowMapper<Integer>(Integer.class));

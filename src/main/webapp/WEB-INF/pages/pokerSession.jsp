@@ -83,7 +83,7 @@
 					
 				</div>
 			</div>
-			<div class="col-md-6"></div>
+			<div class="col-md-6" id="col-md-6"></div>
 		</div>
 		<div class="row">
 			<div class="col-md-4" id="storiesDiv">
@@ -120,8 +120,8 @@
 					<div class="panel-heading">
 						<h3 class="panel-title"># Story Title</h3>
 					</div>
-					<div class="panel-body">
-						<p>Here comes the description of the story. Here comes the
+					<div class="panel-body" id="panel-body">
+						<p id="storyDiv">Here comes the description of the story. Here comes the
 							description of the story.Here comes the description of the
 							story.Here comes the description of the story.Here comes the
 							description of the story.Here comes the description of the story.</p>
@@ -182,23 +182,109 @@
 	<script src="${pageContext.request.contextPath}/resources/js/bootstrap.min.js"></script>
 	<script src="${pageContext.request.contextPath}/resources/js/sockjs-0.3.4.js"></script>
     <script src="${pageContext.request.contextPath}/resources/js/stomp.js"></script>
+    
 	<script type="text/javascript">
 		var stompClient = null;
+		var stompClientForVote = null;
 		
+		var currentStroyID = null;
 		$(document).ready(function () {
-  			connect();
+  			connectToBroadCast();
+  			connectToVote();
+  			
 		});
 		
-		function connect() {
-            var socket = new SockJS('/planpoker/joinPokerSession');
+		function connectToBroadCast() {
+		
+		    alert("connect");
+		    var currentURL = window.location.protocol + "//" + window.location.host;
+		    var socket = new SockJS(currentURL + '/planpoker/broadCast');
             stompClient = Stomp.over(socket);            
             stompClient.connect({}, function(frame) {
-                console.log('Connected: ' + frame);
-                stompClient.subscribe('/pokerSession/newParticipant', function(participant){
-                    showGreeting(JSON.parse(participant.body).name);
+                console.log('Connected....: ' + frame);
+                stompClient.subscribe('/pokerSession/broadCastStories', function(story) {
+                    console.log("json value....bilgates" + (JSON.parse(story.body).storyTitle));
+                    
+                    currentStroyID = JSON.parse(story.body).storyId;
+                    console.log("current story id........in connectToBroadCast.." + currentStroyID);
+                    
+                    showGreeting((JSON.parse(story.body).storyTitle));
+                    
+                    
+                   //showGreeting(JSON.parse(testName.body).name);
                 });
-            });
+                });
         }
+        
+       function connectToVote() {
+		   alert("connect to vote");
+		   var currentURL = window.location.protocol + "//" + window.location.host;
+		    var socket = new SockJS(currentURL + '/planpoker/castVote');
+            stompClientForVote = Stomp.over(socket);            
+            stompClientForVote.connect({}, function(frame) {
+                console.log('Connected..to vote..: ' + frame);
+                stompClientForVote.subscribe('/pokerSession/vote', function(vote) {
+                  //   console.log("json value....for vote..." + (JSON.parse(vote.body)));
+                    console.log("bilgates....how are you....." + vote.body);
+                    
+                    //showGreeting((JSON.parse(story.bodybilgates).storyTitle));
+                   //showGreeting(JSON.parse(testName.body).name);
+                });
+                });
+        }
+        
+    
+        function broadCastStory(storyId) {
+           currentStroyID = storyId;
+           //alert(storyContent);
+         /*   console.log(".............." + window.location.protocol + "//" + window.location.host);
+            var newURL = window.location.protocol + "//" + window.location.host;
+            //var socket = new SockJS('/planpoker/broadCast');
+            var socket = new SockJS(newURL + '/planpoker/broadCast');
+            stompClient = Stomp.over(socket);            
+            stompClient.connect({}, function(frame) {
+                console.log('Connected....: ' + frame);
+                stompClient.subscribe('/pokerSession/broadCastStories', function(story) {
+                    console.log("json value....bilgates." + (JSON.parse(story.body).storyTitle));
+                    currentStroyID = JSON.parse(story.body).storyId;
+                    console.log("current story id........in broadcast.." + currentStroyID);
+                    showGreeting((JSON.parse(story.body).storyTitle));
+                   //showGreeting(JSON.parse(testName.body).name);
+                });
+                });*/
+                
+       
+               stompClient.send("/app/broadCast", {}, storyId);
+           
+        }
+        
+        
+        function getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                var pair = vars[i].split("=");
+                if(pair[0] == variable){
+                    return pair[1];
+                }
+            }
+            return(false);
+        }
+        
+         function castVote() {
+              console.log("current sttory id in cast" + currentStroyID);
+              var participantEmail = getQueryVariable('email');
+              console.log("voter email..." + participantEmail);
+              
+              // Get the selected value from drop down
+              var e = document.getElementById('voteValue');
+              var points = e.options[e.selectedIndex].value;
+              points = points.trim();
+              
+              console.log("votePoint..." + points);
+              stompClientForVote.send("/app/castVote", {}, JSON.stringify({ 'storyId' :  currentStroyID, 'participantEmail' : participantEmail, 'points' : points}));
+         }
+        
         
         function sendName() {
             /* var name = document.getElementById('name').value;
@@ -206,12 +292,33 @@
         }
         
         function showGreeting(message) {
-        	log.console("********************"+message);
+           console.log("********************Message" + message);
            /*  var response = document.getElementById('response');
             var p = document.createElement('p');
             p.style.wordWrap = 'break-word';
             p.appendChild(document.createTextNode(message));
             response.appendChild(p); */
+            
+            var storyDiv = document.getElementById("storyDiv");
+            
+            var mainDiv = document.getElementById("col-md-6");
+            
+            var mainDivWidth = mainDiv.offsetWidth;
+            
+            console.log("story div width..first" + storyDiv.offsetWidth);
+            
+            storyDiv.innerHTML = message;
+            
+            //mainDiv.setAttribute("style", "width:storyDivWidth);
+           // console.log("maindiv second.." +  mainDiv.offsetWidth);
+           // mainDiv.style.width = mainDivWidth;
+            
+            console.log("maindiv third.." +  mainDiv.offsetWidth);
+           /* var p = document.createElement('p');
+            p.style.wordWrap = 'break-word';
+            p.appendChild(document.createTextNode(message));
+            
+            storyDiv.appendChild(p);*/
         }
         
 	</script>

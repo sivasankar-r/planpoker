@@ -16,4 +16,8 @@ public interface IPlanningService {
 	List<Participant> fetchParticipantsJoined(int sessionId);
 	List<Participant> fetchStoryVotes(int sessionId, int storyId);
 	boolean isAuthorizedUser(int sessionId, String email);
+	void updateSessionParticipant(int sessionId, String email, int status) throws Exception;
+	Story fetchStoryById(int storyId);
+	public void updateStoryVote(int storyId, String participant_email, int votePint) throws Exception;
+	public String getUserNameByEmail(String email);
 }

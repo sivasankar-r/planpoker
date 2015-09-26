@@ -30,4 +30,13 @@ public interface IPlanningDao {
 	List<Participant> fetchStoryVotes(int sessionId, int storyId);
 
 	boolean isAuthorizedUser(int sessionId, String email);
+	
+	void updateParticipantsStatus(int sessionId, String email, int status) throws SQLException;
+	
+	Story fetchStoryById(int storyId);
+	
+	void updateStoryVote(int storyId, String participant_email, int votePint) throws SQLException;
+	
+	public String getUserNameByEmail(String email);
+
 }

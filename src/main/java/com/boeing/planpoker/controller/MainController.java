@@ -22,6 +22,7 @@ import com.boeing.planpoker.service.IPlanningService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+
 @Controller
 public class MainController {
 	private static final Logger log = Logger.getLogger(MainController.class.getName());
@@ -31,11 +32,14 @@ public class MainController {
 	
 	@RequestMapping(value = {"/session/", "/session"}, method = RequestMethod.GET)
 	public ModelAndView startSession(@RequestParam Map<String,String> allRequestParams) {
+		System.out.println("Start session is called");
 		ModelAndView model = new ModelAndView();
 		String sessionUrl = allRequestParams.get("sessionUrl");
 		String email = allRequestParams.get("email");
 		
-		if(sessionUrl == null || sessionUrl.trim().isEmpty()){
+		
+		if(sessionUrl == null || sessionUrl.trim().isEmpty()) {
+			System.out.println("has no session url");
 			//has no session url
 			model.setViewName("login");
 			return model;
@@ -57,6 +61,7 @@ public class MainController {
 		}
 		
 		PokerSession pokerSession = planningService.fetchPokerSession(sessionUrl);
+		
 		if(pokerSession == null) {
 			//has session url, but invalid session url
 			model.setViewName("login");
@@ -65,12 +70,38 @@ public class MainController {
 		
 		boolean isAuthorized = planningService.isAuthorizedUser(pokerSession.getSessionId(), user.getEmail());
 		if(!isAuthorized) {
+			System.out.println("is authorized user");
 			model.setViewName("login");
 			return model;
 		}
 		
+		
 		List<Story> storiesList = planningService.fetchStories(pokerSession.getSessionId());
 		List<Participant> participantList = planningService.fetchParticipantsJoined(pokerSession.getSessionId());
+		
+		if (participantList.size() > 0) {
+			boolean isParticipantExist = false;
+			for(int i = 0; i < participantList.size(); i++) {
+				if (participantList.get(i).getName().equals(user.getName())) {
+					
+					isParticipantExist = true;
+					break;
+				}
+				
+			}
+			
+			if (!isParticipantExist) {
+                try {	
+				    planningService.updateSessionParticipant(pokerSession.getSessionId(), user.getEmail(), 1);
+				    participantList.add(user);
+			    } catch (Exception ex) {
+				    log.error("Exception while update the participants status");
+				    log.error(ex.getMessage());
+				    ex.printStackTrace();
+        		}
+			}
+		}
+		
 		model.setViewName("pokerSession");
 		model.addObject("stories", storiesList);
 		model.addObject("participants", participantList);
@@ -108,7 +139,7 @@ public class MainController {
 
 	private Participant getUser(String email) {
 		Participant user = null;
-		if(email!=null && !email.trim().isEmpty()){
+		if(email!=null && !email.trim().isEmpty()) {
 			try {
 				user = planningService.isValidUser(email.trim());
 			} catch (Exception e) {
@@ -153,6 +184,11 @@ public class MainController {
         }
         return value;
     }
+	
+	
+	private void joinSession() {
+		
+	}
 	
 	@RequestMapping(value = { "/pokerSession" })
 	public String navPokerSession() {

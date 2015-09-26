@@ -1,0 +1,12 @@
+com\boeing\planpoker\controller\PokerSessionController.class
+com\boeing\planpoker\model\Participant.class
+com\boeing\planpoker\controller\MainController.class
+com\boeing\planpoker\model\Story.class
+com\boeing\planpoker\service\IPlanningService.class
+com\boeing\planpoker\model\PokerSession.class
+com\boeing\planpoker\service\PlanningService.class
+com\boeing\planpoker\dao\PlanningDao.class
+com\boeing\planpoker\model\StoryVotes.class
+com\boeing\planpoker\util\AppStringUtils.class
+com\boeing\planpoker\dao\IPlanningDao.class
+com\boeing\planpoker\controller\WebSocketConfig.class

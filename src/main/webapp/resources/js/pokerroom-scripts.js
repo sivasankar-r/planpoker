@@ -51,6 +51,13 @@ function socketOnOpen(e) {
     disconnectBtnEl.disabled = false;
 }
 
+function broadCastStory(value) {
+	alert("broad cost");
+	
+}
+
+
+
 function socketOnMessage(e) {
     var eventName = e.data.substr(0, e.data.indexOf("|"));
     var data = e.data.substr(e.data.indexOf("|") + 1);

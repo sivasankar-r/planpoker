@@ -4,6 +4,7 @@ public class StoryVotes {
 	private int storyId;
 	private String participantEmail;
 	private int points;
+	
 	public int getStoryId() {
 		return storyId;
 	}
