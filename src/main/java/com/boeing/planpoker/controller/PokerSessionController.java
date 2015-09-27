@@ -61,21 +61,14 @@ public class PokerSessionController {
 	@MessageMapping("/broadCast")
 	@SendTo("/pokerSession/broadCastStories")
 	public BroadCast broadCastStories(int storyId) {
-		System.out.println("data....." + storyId);
-		
 		Story story = planningService.fetchStoryById(storyId);
-		
 		int sessionId = planningService.fetchSessionIdByStoryId(storyId);
-		
 		List<Participant> participantList = planningService.fetchParticipantsJoined(sessionId);
 		
 		BroadCast broadCast = new BroadCast();
 		broadCast.setStoryId(storyId);
 		broadCast.setStoryTitle(story.getStoryTitle());
 		broadCast.setParticipantList(participantList);
-		
-		
-	
 		return broadCast;
 	}
 	
@@ -99,17 +92,9 @@ public class PokerSessionController {
 	@MessageMapping("/getResults")
     @SendTo("/pokerSession/results")
 	public List<Participant> getResults(int storyId) {
-		
-		 List<Participant> participantList = null;
-		try {
-			int sessionId = planningService.fetchSessionIdByStoryId(storyId);
-		    
-		    participantList = planningService.fetchStoryVotes(sessionId, storyId);
-		    
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-		
+		List<Participant> participantList = null;
+		int sessionId = planningService.fetchSessionIdByStoryId(storyId);
+		participantList = planningService.fetchStoryVotes(sessionId, storyId);  
 		return participantList;
 	}
 	
