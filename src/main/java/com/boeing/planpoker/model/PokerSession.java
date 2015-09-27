@@ -13,6 +13,7 @@ public class PokerSession {
 	private String sessionUrl;
 	private String stories;
 	private String peopleEmailList;
+	private String tfsIterationPath;
 	
 	public int getSessionId() {
 		return sessionId;
@@ -86,5 +87,13 @@ public class PokerSession {
 		log.debug("Session URL : " + sessionUrl);
 		log.debug("Stories for the session : " + stories);
 		log.debug("Time Limit for each story : " + votingTimeLimit);
+	}
+
+	public String getTfsIterationPath() {
+		return tfsIterationPath;
+	}
+
+	public void setTfsIterationPath(String tfsIterationPath) {
+		this.tfsIterationPath = tfsIterationPath;
 	}
 }

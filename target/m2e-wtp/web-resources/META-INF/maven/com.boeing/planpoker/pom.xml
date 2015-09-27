@@ -82,6 +82,12 @@
 			<artifactId>jstl</artifactId>
 			<version>1.2</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.microsoft.tfs</groupId>
+			<artifactId>sdk</artifactId>
+			<version>11.0.0</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<finalName>planpoker</finalName>

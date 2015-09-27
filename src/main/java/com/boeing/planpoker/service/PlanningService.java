@@ -13,6 +13,8 @@ import com.boeing.planpoker.model.Participant;
 import com.boeing.planpoker.model.PokerSession;
 import com.boeing.planpoker.model.Story;
 import com.boeing.planpoker.util.AppStringUtils;
+import com.microsoft.tfs.core.clients.workitem.WorkItem;
+import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
 
 @Service
 public class PlanningService implements IPlanningService {
@@ -20,16 +22,23 @@ public class PlanningService implements IPlanningService {
 	@Autowired
 	private IPlanningDao planningDao;
 	
+	@Autowired
+	private ITfsService tfsService;
+	
 	@Override
 	public void createPlanSession(PokerSession pokerSession) throws Exception {
-		System.out.println("what is called");
 		pokerSession.setSessionUrl(AppStringUtils.generateRandomString());
 		try{
 			int sessionId = planningDao.createPlanningSession(pokerSession);
 			log.info("New Planning Session Created. Session ID : " + sessionId);
 			if(sessionId != -1) {
 				pokerSession.setSessionId(sessionId);
-				List<Story> stories = generateStories(pokerSession.getStories(), sessionId);
+				List<Story> stories = null;
+				if(pokerSession.getTfsIterationPath()!=null && !pokerSession.getTfsIterationPath().isEmpty()){
+					stories = getTfsWorkItems(pokerSession.getTfsIterationPath(), sessionId);
+				} else {
+					stories = generateStories(pokerSession.getStories(), sessionId);	
+				}
 				List<String> participantList = AppStringUtils.parseLineDelimitedString(pokerSession.getPeopleEmailList());
 				if(stories!=null) {
 					for(Story story : stories) {
@@ -52,6 +61,21 @@ public class PlanningService implements IPlanningService {
 		}
 	}
 	
+	private List<Story> getTfsWorkItems(String tfsIterationPath, int sessionId) {
+		// TODO Auto-generated method stub
+		List<Story> stories = new ArrayList<>();
+		WorkItemCollection workItems = tfsService.getWorkItems(tfsIterationPath);
+		for (int i = 0; i < workItems.size(); i++) {
+			WorkItem workItem = workItems.getWorkItem(i);
+			Story story = new Story();
+			story.setSessionId(sessionId);
+			story.setStoryExternalId(""+workItem.getID());
+			story.setStoryTitle(workItem.getTitle());
+			stories.add(story);
+		}
+		return stories;
+	}
+
 	@Override
 	public void addStoriesFromPoker(String stories, int sessionId) throws Exception {
 		List<Story> generatedStories = generateStories(stories, sessionId);

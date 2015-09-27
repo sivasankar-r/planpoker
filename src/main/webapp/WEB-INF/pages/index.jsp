@@ -45,6 +45,13 @@
 						</div>
 					</div>
 					<div class="form-group">
+						<label for="tfsIterationPath" class="col-sm-2 control-label">
+							Stories </label>
+						<div class="col-sm-10">
+							<input class="form-control" id="tfsIterationPath" placeholder="Enter TFS iteration path"/>
+						</div>
+					</div>
+					<div class="form-group">
 						<label for="cardSet" class="col-sm-2 control-label"> Card
 							Set</label>
 						<div class="col-sm-10">
@@ -125,10 +132,12 @@
 			var cardSet = $('input[name=cardSet]:checked').val();
 			var timer = $('#timer').val();
 			var peopleEmailList = $('#peopleEmailList').val();
+			var tfsIterationPath = $('#tfsIterationPath').val();
 			
 			var json = {
 				"sessionName" : sessionName,
 				"hostEmail" : hostEmail,
+				"tfsIterationPath" : tfsIterationPath,
 				"stories": stories,
 				"planningCardSet" : cardSet,
 				"votingTimeLimit" : timer,
