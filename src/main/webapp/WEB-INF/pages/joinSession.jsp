@@ -8,7 +8,7 @@
 <title>Planning Ninjas</title>
 <meta name="description" content="This is my fucking planning poker">
 <meta name="author" content="sivasankar_r">
-
+<link rel="shortcut icon" href="${pageContext.request.contextPath}/resources/img/poker_ninja.ico">
 <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
 <link href="${pageContext.request.contextPath}/resources/css/login.css" rel="stylesheet">
 <style>

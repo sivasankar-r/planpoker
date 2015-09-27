@@ -20,12 +20,12 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		System.out.println("register stamp ponts");
-		//registry.addEndpoint("/joinPokerSession").withSockJS();
-		//registry.addEndpoint("/castVote").withSockJS();
 		registry.addEndpoint("/broadCast").withSockJS();
 		registry.addEndpoint("/castVote").withSockJS();
 		registry.addEndpoint("/joinSession").withSockJS();
-		registry.addEndpoint("/getResults").withSockJS();
+		registry.addEndpoint("/revealVotes").withSockJS();
+		registry.addEndpoint("/editSp").withSockJS();
+		registry.addEndpoint("/addStories").withSockJS();
 	}
 
 }

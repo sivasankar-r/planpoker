@@ -1,6 +1,8 @@
 package com.boeing.planpoker.dao;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -13,6 +15,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
@@ -187,6 +190,26 @@ public class PlanningDao implements IPlanningDao {
 		return participants;
 	}
 	
+	@Override
+	public List<String> fetchParticipantListBySessionId(int sessionId) {
+		List<String> participants = new ArrayList<String>();
+		String query = "SELECT email FROM session_participants where session_id = " + sessionId;
+		participants = jdbcTemplate.query(query, new RowMapper<String>(){
+            public String mapRow(ResultSet rs, int rowNum) 
+                                         throws SQLException {
+                    return rs.getString(1);
+            }
+       });
+		
+		//participants =  jdbcTemplate.query(query, new Object[]{sessionId}, ResultSetExtractor<String.class>(Str));
+		
+		System.out.println("participantEmail...." + participants);
+		
+		
+		
+		return participants;
+	}
+	
 		@Override 
 	public int fetchSessionIdByStoryId(int storyId) {
 		String query = "SELECT session_id FROM stories WHERE story_id = ?";
@@ -203,7 +226,12 @@ public class PlanningDao implements IPlanningDao {
 			if(participants!=null) {
 			for(Participant participant : participants) {
 				String voteQuery = "SELECT vote_points FROM story_votes WHERE participant_email = ? AND story_id = ?";
-				Integer value = jdbcTemplate.queryForObject(voteQuery, new Object[]{participant.getEmail(), storyId}, Integer.class);
+				Integer value = null;
+				try {
+					value = jdbcTemplate.queryForObject(voteQuery, new Object[]{participant.getEmail(), storyId}, Integer.class);
+				} catch (EmptyResultDataAccessException e) {
+					
+				}
 				if(value!=null){
 					participant.setCurrentStoryVote(value);	
 				} else {
@@ -227,5 +255,15 @@ public class PlanningDao implements IPlanningDao {
 			log.error(e.getLocalizedMessage());
 		}
 		return valid;
+	}
+
+	@Override
+	public void setVotingCompleted(int storyId, int points) {
+		int rowsUpdated = jdbcTemplate.update("update stories SET final_points = ?, voted = ? WHERE story_id = ?",	new Object[] {points, 1, storyId});
+		if(rowsUpdated == 0){
+			log.info("Failed to update voting completed for the Story : " + storyId);
+		} else {
+			log.info("Updated voting completed for the Story : " + storyId);
+		} 
 	}
 }

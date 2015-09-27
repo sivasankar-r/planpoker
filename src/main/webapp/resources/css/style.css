@@ -3,3 +3,16 @@
       vertical-align: inherit;
       background-color : #337ab7
 }
+
+.tableHeaders {
+	background-color: #2C3E50 !important;
+}
+
+.tableHeaders th {
+    color:white !important;
+}
+
+.branding {
+	color: #E74C3C !important;
+	font-size: 15em;
+}

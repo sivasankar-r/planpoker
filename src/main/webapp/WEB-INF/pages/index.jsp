@@ -8,7 +8,7 @@
 <title>Planning Ninjas</title>
 <meta name="description" content="This is my fucking planning poker">
 <meta name="author" content="sivasankar_r">
-
+<link rel="shortcut icon" href="${pageContext.request.contextPath}/resources/img/poker_ninja.ico">
 <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
 <link href="${pageContext.request.contextPath}/resources/css/style.css" rel="stylesheet">
 
@@ -56,20 +56,20 @@
 							</div>
 							<div class="radio ">
 								<label> <input type="radio" name="cardSet"
-									id="cardSet2" value="1" > Modified
+									id="cardSet2" value="1" disabled> Modified
 									Fibonacci ( 0, ½, 1, 2, 3, 5, 8, 13, 20, 40, 100, ?, Pass,
 									Break )
 								</label>
 							</div>
 							<div class="radio ">
 								<label> <input type="radio" name="cardSet"
-									id="cardSet3" value="2" > T-shirts
+									id="cardSet3" value="2" disabled> T-shirts
 									( xxs, xs, s, m, l, xl, xxl, ?, Pass, Break )
 								</label>
 							</div>
 							<div class="radio ">
 								<label> <input type="radio" name="cardSet"
-									id="cardSet4" value="3" > Powers of
+									id="cardSet4" value="3" disabled> Powers of
 									2 ( 0, 1, 2, 4, 8, 16, 32, 64, ?, Pass, Break )
 								</label>
 							</div>
