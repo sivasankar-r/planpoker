@@ -53,6 +53,22 @@ public class PlanningService implements IPlanningService {
 	}
 	
 	@Override
+	public void addStoriesFromPoker(String stories, int sessionId) throws Exception {
+		List<Story> generatedStories = generateStories(stories, sessionId);
+		try {
+		    if(stories!=null) {
+			    for(Story story : generatedStories) {
+				    planningDao.addStory(story);
+			    }
+		    }
+		} catch(SQLException ex) {
+			log.error(ex);
+			throw new Exception(ex);
+		}
+	}
+	
+	
+	@Override
 	public boolean updateSessionParticipant(int sessionId, String email, int status) {
 		return planningDao.updateParticipantsStatus(sessionId, email, status);
 	}
@@ -116,6 +132,11 @@ public class PlanningService implements IPlanningService {
 	public List<Participant> fetchParticipantsJoined(int sessionId) {
 		return planningDao.fetchParticipantsJoined(sessionId);
 	}
+	
+	@Override
+	public List<String> fetchParticipantListBySessionId(int sessionId) {
+		return planningDao.fetchParticipantListBySessionId(sessionId);
+	}
 
 	@Override
 	public List<Participant> fetchStoryVotes(int sessionId, int storyId) {
@@ -133,6 +154,19 @@ public class PlanningService implements IPlanningService {
 	}
 	
 	@Override
+	public void invitePeople(int sessionId, String participantsEmail) throws Exception {
+		
+		List<String> participantEmailList = AppStringUtils.parseLineDelimitedString(participantsEmail);
+		
+		for (String email : participantEmailList) {
+		    if (!planningDao.isAuthorizedUser(sessionId, email)) {
+		    	planningDao.addParticipant(email, sessionId, 0);
+		    	
+		    }
+		 }
+	}
+	
+	@Override
 	public void updateStoryVote(int storyId, String participant_email, int votePint) throws Exception {
 		try {
 			planningDao.updateStoryVote(storyId, participant_email, votePint);
@@ -147,5 +181,10 @@ public class PlanningService implements IPlanningService {
 	public String getUserNameByEmail(String email) {
 		return planningDao.getUserNameByEmail(email);
 		
+	}
+
+	@Override
+	public void setVotingCompleted(int storyId, int points) {
+		planningDao.setVotingCompleted(storyId, points);
 	}
 }

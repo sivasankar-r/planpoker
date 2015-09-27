@@ -34,4 +34,11 @@ public interface IPlanningService {
 	public String getUserNameByEmail(String email);
 	int fetchSessionIdByStoryId(int storyId);
 
+	void setVotingCompleted(int storyId, int points);
+	public void addStoriesFromPoker(String stories, int sessionId) throws Exception;
+	
+	public List<String> fetchParticipantListBySessionId(int sessionId);
+	
+	public void invitePeople(int sessionId, String participantsEmail) throws Exception;
+
 }

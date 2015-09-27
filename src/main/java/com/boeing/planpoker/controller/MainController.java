@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.boeing.planpoker.model.InvitePeople;
 import com.boeing.planpoker.model.Participant;
 import com.boeing.planpoker.model.PokerSession;
 import com.boeing.planpoker.model.Story;
@@ -75,13 +76,12 @@ public class MainController {
 		
 		
 		List<Story> storiesList = planningService.fetchStories(pokerSession.getSessionId());
-		List<Participant> participantList = planningService.fetchParticipantsJoined(pokerSession.getSessionId());
-		
-		
+		//List<Participant> participantList = planningService.fetchParticipantsJoined(pokerSession.getSessionId());
 		
 		model.setViewName("pokerSession");
 		model.addObject("stories", storiesList);
 		model.addObject("participants", null);
+		model.addObject("pokerSession", pokerSession);
 		return model;
 	}
 	
@@ -117,13 +117,63 @@ public class MainController {
 	@RequestMapping(value = "/getHostEmail", method = RequestMethod.GET)
 	@ResponseBody
 	public String getHostEmail(@RequestParam Map<String,String> allRequestParams) throws Exception {
-		System.out.println("getHost Mail is called");
 		String sessionUrl = allRequestParams.get("sessionUrl");
-		System.out.println("sessionUrl..............." + sessionUrl);
 		PokerSession pokerSession = planningService.fetchPokerSession(sessionUrl);
-		System.out.println("email..." + pokerSession.getHostEmail());
 		return pokerSession.getHostEmail();
 	}
+	
+	@RequestMapping(value = "/getParticipants", method = RequestMethod.GET)
+	@ResponseBody
+	public String getParticipants(@RequestParam Map<String,String> allRequestParams) throws Exception {
+		System.out.println("get participants Mail is called");
+		String sessionUrl = allRequestParams.get("sessionUrl");
+		
+		System.out.println("sessionUrl..............." + sessionUrl);
+		int sessionId = planningService.fetchPokerSession(sessionUrl).getSessionId();
+		List<String> particpantList = planningService.fetchParticipantListBySessionId(sessionId);
+		System.out.println("people mail list....." + particpantList);
+		
+		String responseData = "";
+		
+		for (String email : particpantList) {
+			responseData  = responseData + ":" + email;
+		}
+		
+		responseData = responseData.substring(1, responseData.length());
+		
+		System.out.println("people mail list....." + responseData);
+		return responseData;
+	}
+	
+	@RequestMapping(value = "/invitepeople", method = RequestMethod.POST)
+	@ResponseBody
+	public String invitePeople(@RequestBody String json) throws Exception {
+		System.out.println("participants email list..." + json);
+		
+		String response = null;
+		log.debug("inviting people..");
+		ObjectMapper mapper = new ObjectMapper();
+		InvitePeople invitePeople = null;
+		try {
+			invitePeople = mapper.readValue(json, InvitePeople.class);
+			System.out.println("invitePeople name" + invitePeople.getParticipantEmail());
+			System.out.println("invitePeople session url" + invitePeople.getSessionUrl());
+			
+			String sessionUrl = invitePeople.getSessionUrl();
+			String participantEmail = invitePeople.getParticipantEmail();
+			int sessionId = planningService.fetchPokerSession(sessionUrl).getSessionId();
+			
+			planningService.invitePeople(sessionId, participantEmail);  
+			
+			response = "SUCCESS";
+		} catch (Exception e) {
+			log.error("Exception created while creating the session");
+			log.error(e.getMessage());
+			response = "Unable to invite";
+		}
+		return response;
+	}
+	
 	
 	
 	private Participant getUser(String email) {

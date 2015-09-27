@@ -24,6 +24,8 @@ public interface IPlanningDao {
 	List<Story> fetchStories(int sessionId);
 
 	List<Participant> fetchParticipantsJoined(int sessionId);
+	
+	public List<String> fetchParticipantListBySessionId(int sessionId);
 
 	void addParticipant(String hostEmail, int sessionId, int i);
 
@@ -40,5 +42,7 @@ public interface IPlanningDao {
 	String getUserNameByEmail(String email);
 	
 	int fetchSessionIdByStoryId(int storyId);
+
+	void setVotingCompleted(int storyId, int points);
 
 }
