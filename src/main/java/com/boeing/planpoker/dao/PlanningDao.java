@@ -152,14 +152,18 @@ public class PlanningDao implements IPlanningDao {
 	
 	@Override
 	public void updateStoryVote(int storyId, String participant_email, int votePint) throws SQLException {
-		int rowsUpdated = jdbcTemplate.update("INSERT INTO story_votes (story_id, participant_email, vote_points) VALUES(?,?,?)", 
-				new Object[] { storyId, participant_email, votePint });
-		
-		if(rowsUpdated ==1) {
-			log.info("Updated StoryVotes by "+ participant_email + "to the Story : " + storyId);
+		int rowsUpdated = jdbcTemplate.update("update story_votes set vote_points = ? where story_id = ? and participant_email = ?", 
+				new Object[] {votePint, storyId, participant_email});
+		if(rowsUpdated == 0){
+			int rowsInserted = jdbcTemplate.update("INSERT INTO story_votes (story_id, participant_email, vote_points) VALUES(?,?,?)", new Object[] { storyId, participant_email, votePint });
+			if(rowsInserted ==1) {
+				log.info("inserted StoryVotes by "+ participant_email + " for the Story : " + storyId);
+			} else {
+				log.info("Failed to inserted StoryVotes by "+ participant_email + " for the Story : " + storyId);
+			}
 		} else {
-			log.info("Failed to update StoryVotes by "+ participant_email + "to the Story : " + storyId);
-		}
+			log.info("Updated StoryVotes by "+ participant_email + " for the Story : " + storyId);
+		} 
 	 }
 
 	@Override
@@ -199,13 +203,12 @@ public class PlanningDao implements IPlanningDao {
 			if(participants!=null) {
 			for(Participant participant : participants) {
 				String voteQuery = "SELECT vote_points FROM story_votes WHERE participant_email = ? AND story_id = ?";
-				List<Integer> list = jdbcTemplate.query(voteQuery, new Object[]{sessionId, 1}, new BeanPropertyRowMapper<Integer>(Integer.class));
-				if(list!=null && !list.isEmpty()){
-					participant.setCurrentStoryVote(list.get(0));	
+				Integer value = jdbcTemplate.queryForObject(voteQuery, new Object[]{participant.getEmail(), storyId}, Integer.class);
+				if(value!=null){
+					participant.setCurrentStoryVote(value);	
 				} else {
 					participant.setCurrentStoryVote(-1);
 				}
-				
 			}
 		}
 		return participants;

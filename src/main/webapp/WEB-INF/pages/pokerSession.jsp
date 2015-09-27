@@ -32,7 +32,7 @@
     	</h2>
     </noscript>
 	<div class="container-fluid">
-		<div class="row">
+		<div class="row hostControls">
 			<div class="col-md-1">
 				<a id="modal-stories" href="#modal-container-stories" role="button" class="btn btn-primary btn-default" data-toggle="modal">Add Stories</a>
 				<div class="modal fade" id="modal-container-stories" role="dialog" aria-labelledby="addStoriesLabel" aria-hidden="true">
@@ -96,7 +96,7 @@
 							<th>#</th>
 							<th>Story</th>
 							<th>Points</th>
-							<th></th>
+							<th class="hostControls"></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -105,7 +105,7 @@
 								<td>${(loop.index)+1}</td>
 								<td>${story.storyTitle}</td>
 								<td>${story.voted == 1 ? story.finalPoints : '-'}</td>
-								<td><a id="broadCast" href="#" title="Broadcast for voting" onclick="broadCastStory(${story.storyId})"><span class="glyphicon glyphicon-bullhorn"></span></a>
+								<td class="hostControls"><a id="broadCast" href="#" title="Broadcast for voting" onclick="broadCastStory(${story.storyId})"><span class="glyphicon glyphicon-bullhorn"></span></a>
 								</td>
 							</tr>
 						</c:forEach>
@@ -217,25 +217,16 @@
 					xhr.setRequestHeader("Content-Type", "application/json");
 				},
 			  success: function(response) {
-			    //Do Something
-			    alert("success" + response);
-			    console.log("hostMail. in alert.." + hostMail);
 			    hostMail = response;
-			    
 			  },
 			  error: function(xhr) {
 				  alert("error");
-			    //Do Something to handle error
 			  }
 			});
 		
 			console.log("hostMail..." + hostMail);
-			
-			// To hide the control if not host
 			if (hostMail != getQueryVariable("email")) {
-				alert("is not host");
-				$( ".col-md-1" ).hide();
-				$( "#modal-invite" ).hide();
+				$(".hostControls" ).hide();
 			}
 			
 		}
@@ -254,17 +245,14 @@
                 //console.log('Connected to the session joining websocket: ' + frame);
                 console.log('Connected to the session joining websocket: ');
                 stompClientForJoining.subscribe('/pokerSession/sessionJoining', function(participantList) {
-                	console.log("New Participant Joined...")
-                	console.log(participantList.body);
-                    updateParticipants(participantList.body);
+                	var participantData = JSON.parse(participantList.body);
+                    updateParticipants(participantData);
                 });
                 joinSession();
 			});
 		}
 		
-		function updateParticipants(participantsJson){
-			console.log("Updating Participants table......")
-			var participantData = JSON.parse(participantsJson)
+		function updateParticipants(participantData){
 			$("#participantsTbl tbody").empty();
 			$.each(participantData, function(idx, participant) {
 				var style = participant.currentStoryVote == -1 ? "danger" : "success";
@@ -280,13 +268,10 @@
             stompClientForBroadcasting.connect({}, function(frame) {
                // console.log('Connected to the story broadcasting websocket: ' + frame);
                console.log('Connected to the story broadcasting websocket: ');
-                stompClientForBroadcasting.subscribe('/pokerSession/broadCastStories', function(story) {
-			currentStroyID = JSON.parse(story.body).storyId;
-			updateCurrentStory(story);
-			var storyTitleDiv = document.getElementById('storyTitleId');
-	               	   var storyTitle = storyTitleDiv.textContent || storyTitleDiv.innerText;
-                 	
-                 	   upadateStoryStatus(storyTitle);
+                stompClientForBroadcasting.subscribe('/pokerSession/broadCastStories', function(content) {
+                	var storyData = JSON.parse(content.body);
+					updateCurrentStory(storyData);
+					updateParticipants(storyData.participantList);
                 });
 			});
         }
@@ -296,24 +281,20 @@
 		    var socket = new SockJS(currentURL + '/planpoker/castVote');
             stompClientForVote = Stomp.over(socket);            
             stompClientForVote.connect({}, function(frame) {
-                //console.log('Connected to the voting websocket: ' + frame);
-                console.log('Connected to the voting websocket: ');
                 stompClientForVote.subscribe('/pokerSession/vote', function(vote) {
-			var currentVoter = vote.body;
-                    //console.log("bilgates....how are you....." + vote.body);
-                     updateVoterStatus(currentVoter);
+					updateVoterStatus(vote.body);
                 });
 			});
         }
         
         function connectToResults() {
-  		 
 		   var currentURL = window.location.protocol + "//" + window.location.host;
 		   var socket = new SockJS(currentURL + '/planpoker/getResults');
            stompClientForResults = Stomp.over(socket);            
            stompClientForResults.connect({}, function(frame) {
         	   stompClientForResults.subscribe('/pokerSession/results', function(results) {
-        		   console.log("json value for the results..." + JSON.parse(results.body).participantList);
+					var participants = JSON.parse(results.body);
+					updateParticipants(participants);
                 });
            });
         }
@@ -355,48 +336,39 @@
         }
         
         function updateVoterStatus(voterName) {
-           
-        	var targetRow = $("#participant_table tr td").filter(function() {
-        	    return $(this).text() == voterName;
-        	        
+        	console.log("voter name "+voterName);
+        	var targetRow = $("#participantsTbl tr td").filter(function() {
+        	    return $(this).text() == voterName;  	        
         	}).parent('tr');
+        	console.log("target row "+targetRow);
         	targetRow.removeClass('danger');
-        	targetRow.addClass('success');
-           console.log("named.....");
-           
+        	targetRow.addClass('success');    
         }
-        function updateCurrentStory(story) {
-			storyTitle = JSON.parse(story.body).storyTitle;
-			$("#storyTitleId").text(storyTitle);
-        }
-	
-	var progressStory;
+      	
+		var progressStory;
         var previousStory;
-        function upadateStoryStatus(storyTitle) {
+        function updateCurrentStory(storyData) {
         	
+        	var storyTitle = storyData.storyTitle;
+        	currentStroyID = storyData.storyId;
+			$("#storyTitleId").text(storyTitle);
         	if (progressStory != undefined) {
         		console.log("inisde first if");
         		previousStory = progressStory;
         		progressStory = storyTitle
         	}
         	
-        	
         	var targetStoryRow = $("#storiesList tr td").filter(function() {
-        		console.log("..... inside update story status.........." + storyTitle);
         	    return $(this).text() == storyTitle;
         	}).parent('tr');
-        	
         	
         	targetStoryRow.removeClass('danger');
             targetStoryRow.addClass('progress');
             
-            
             progressStory = storyTitle;
             
             if (previousStory != undefined) {
-            	console.log("inisde ");
             	var previousStoryRow = $("#storiesList tr td").filter(function() {
-            		console.log("..... inside previous story row");
             	    return $(this).text() == previousStory;
             	}).parent('tr');
             	
