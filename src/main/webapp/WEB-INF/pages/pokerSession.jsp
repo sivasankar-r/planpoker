@@ -84,12 +84,12 @@
 		</div>
 		
 		<div class="row">
-			<div class="col-md-3" id="storiesDiv">
+			<div class="col-md-3" id="storiesDiv" style="overflow:auto; height: 400px;">
 				<table class="table table-hover tableHeaders" id="storiesList">
 					<thead>
 						<tr>
 							<th style="text-align:center">#</th>
-							<th style="text-align:center;width:250px">Story Title</th>
+							<th style="text-align:center;">Story Title</th>
 							<th style="text-align:center">Points</th>
 							<th class="hostControls" style="text-align:center">Action</th>
 							<th style="display: none;">StoryId</th>
@@ -108,14 +108,6 @@
 						</c:forEach>
 					</tbody>
 				</table>
-				<div style="text-align: center">
-					<ul class="pagination pagination-sm">
-						<li><a href="#">Prev</a></li>
-						<li><a href="#">1</a></li>
-						<li><a href="#">2</a></li>
-						<li><a href="#">Next</a></li>
-					</ul>
-				</div>
 			</div>
 			<div class="col-md-6">
 				<div class="panel panel-primary" id="storyPanel">
@@ -123,10 +115,7 @@
 						<h3 class="panel-title" id="storyTitleId"># Story Title</h3>
 					</div>
 					<div class="panel-body" id="panel-body">
-						<p id="storyDiv">Here comes the description of the story. Here comes the
-							description of the story.Here comes the description of the
-							story.Here comes the description of the story.Here comes the
-							description of the story.Here comes the description of the story.</p>
+						<p id="storyDiv"></p>
 						<p>
 						<a id="modal-tfs" class="btn" href="#modal-container-tfs" data-toggle="modal" >View in Team Foundation Server »</a>
 						<div class="modal fade" id="modal-container-tfs" role="dialog" aria-labelledby="tfsLabel" aria-hidden="true">
@@ -176,7 +165,7 @@
 				</div>
 			</div>
 			
-			<div class="col-md-3" id="participantsDiv">
+			<div class="col-md-3" id="participantsDiv" style="overflow: auto; height: 400px;">
 				<table class="table table-hover tableHeaders" id="participantsTbl">
 					<thead>
 						<tr>
